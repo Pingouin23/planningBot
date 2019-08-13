@@ -1,0 +1,12 @@
+{
+	"name": "planningBot",
+	"version": "1.0.0",
+	"description": "A bot for lataupefr planning",
+	"main": "bot.js",
+	"author": "Pingouin23",
+	"dependencies": {
+		"discord.io": "https://github.com/woor/discord.io/tarball/gateway_v6",
+		"oauth": "^0.9.15",
+		"winston": "^3.2.1"
+	}
+}
