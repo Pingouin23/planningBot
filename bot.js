@@ -15,6 +15,8 @@ let bot = new Discord.Client({
    autorun: true
 });
 
+let authorizedRoles = ['Taupe FR Modo', 'Taupe FR Admin'];
+
 let msgId = state.msgId;
 let mapDaysMsg = state.mapDaysMsg || {
 	0: [],
@@ -436,84 +438,103 @@ bot.on('message', function (user, userID, channelID, message, evt) {
     // Our bot needs to know if it will execute a command
     // It will listen for messages that will start with `!`
     if (message.substring(0, 1) == '!') {
-		let args = message.substring(1).match(/(".*?"|[^"\s]+)+(?=\s*|\s*$)/g);
-        //let args = message.substring(1).split(' ');
-        let cmd = args[0];
-       
-        args = args.splice(1);
-        switch(cmd) {
-			// !setup
-			case 'setup':
-				resetState();
-				mapDaysMsg = {
-					0: [],
-					1: [],
-					2: [],
-					3: [],
-					4: [],
-					5: [],
-					6: []
+		let serverId = bot.channels[channelID].guild_id;
+		let member = bot.servers[serverId].members[userID];
+		let globalRoles = bot.servers[serverId].roles;
+		if (!member)
+			return;
+		let memberRoles = member.roles;
+		let allowUser = false;
+		if (memberRoles){
+			for (var i=0; i<memberRoles.length; i++){
+				if (globalRoles[memberRoles[i]] && authorizedRoles.includes(globalRoles[memberRoles[i]].name)){
+					allowUser = true;
+					break;
 				}
-				bot.sendMessage({
-					to: channelID,
-					message: getSetupMsg()
-				}, function(err, res){
-					msgId = res.id;
-					saveState();
-				});
-				break;
-			// !add - args are : day runnner1 runner2 time [caster1] [caster2]
-			case 'add':
-				var newMsg = addToMsg(args, channelID);
-				if (!newMsg)
-					return;
-				
-				bot.editMessage({
-				   channelID: channelID,
-				   messageID: msgId,
-				   message: getDisplayMsg()
-				});
-				break;
-			// !upd - args are : day lineNumber cast1 [cast2]
-			case 'upd':
-				var newMsg = updMsg(args, channelID);
-				if (!newMsg)
-					return;
-				
-				bot.editMessage({
-				   channelID: channelID,
-				   messageID: msgId,
-				   message: getDisplayMsg()
-				});
-				break;
-			// !del - args are : day lineNumber
-			case 'del':
-				var newMsg = delMsg(args, channelID);
-				if (!newMsg)
-					return;
-				
-				bot.editMessage({
-				   channelID: channelID,
-				   messageID: msgId,
-				   message: getDisplayMsg()
-				});
-				break;
-			//!tweet - args are : day
-			case 'tweet':
-				tweet(args, channelID);
-				break;
-			// !help - args are : cmdName
-			case 'help':
-				bot.sendMessage({
-				   to: channelID,
-				   message: getHelpMsg()
-				}, function(err, res){
-					deleteMsgDelay(channelID, res.id, 15000);
-				});
-				break;
-            // Just add any case commands if you want to..
-         }
-		 saveState();
-		 deleteMsgDelay(channelID, evt.d.id);
-     }
+			}
+		}
+		if (allowUser){
+			let args = message.substring(1).match(/(".*?"|[^"\s]+)+(?=\s*|\s*$)/g);
+			//let args = message.substring(1).split(' ');
+			if (args == null)
+				return;
+			let cmd = args[0];
+		   
+			args = args.splice(1);
+			switch(cmd) {
+				// !setup
+				case 'setup':
+					resetState();
+					mapDaysMsg = {
+						0: [],
+						1: [],
+						2: [],
+						3: [],
+						4: [],
+						5: [],
+						6: []
+					}
+					bot.sendMessage({
+						to: channelID,
+						message: getSetupMsg()
+					}, function(err, res){
+						msgId = res.id;
+						saveState();
+					});
+					break;
+				// !add - args are : day runnner1 runner2 time [caster1] [caster2]
+				case 'add':
+					var newMsg = addToMsg(args, channelID);
+					if (!newMsg)
+						break;
+					
+					bot.editMessage({
+					   channelID: channelID,
+					   messageID: msgId,
+					   message: getDisplayMsg()
+					});
+					break;
+				// !upd - args are : day lineNumber cast1 [cast2]
+				case 'upd':
+					var newMsg = updMsg(args, channelID);
+					if (!newMsg)
+						break;
+					
+					bot.editMessage({
+					   channelID: channelID,
+					   messageID: msgId,
+					   message: getDisplayMsg()
+					});
+					break;
+				// !del - args are : day lineNumber
+				case 'del':
+					var newMsg = delMsg(args, channelID);
+					if (!newMsg)
+						break;
+					
+					bot.editMessage({
+					   channelID: channelID,
+					   messageID: msgId,
+					   message: getDisplayMsg()
+					});
+					break;
+				//!tweet - args are : day
+				case 'tweet':
+					tweet(args, channelID);
+					break;
+				// !helpPlanning - args are : cmdName
+				case 'helpPlanning':
+					bot.sendMessage({
+					   to: channelID,
+					   message: getHelpMsg()
+					}, function(err, res){
+						deleteMsgDelay(channelID, res.id, 15000);
+					});
+					break;
+				// Just add any case commands if you want to..
+			 }
+			 saveState();
+		}
+		deleteMsgDelay(channelID, evt.d.id);
+    }
 });
