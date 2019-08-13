@@ -112,6 +112,10 @@ function getHelpMsg(){
 			hlpMsg += '\t -Supprime la ligne souhaitée au jour souhaité\n';
 			hlpMsg += '\t -*Ex: !del Lu 1*\n\n';
 			
+			hlpMsg += '**!pos** *jour ligneAreplacer position*\n';
+			hlpMsg += '\t -Déplace la ligne d\'un jour à la position souhaitée\n';
+			hlpMsg += '\t -*Ex: !pos Lu 3 2 (délace la ligne 3 à la position 2 du Lundi)*\n\n';
+			
 			hlpMsg += '-Formats de jour acceptés : Lundi, Lu, 1\n';
 			hlpMsg += '-Les [paramètres] entre crochets sont optionnels.\n';
 			hlpMsg += '-Si un paramètre doit contenir des espaces, le nommer entre " ". Ex : !add Lu run1 run2 "après Shigan/Future"';
@@ -134,6 +138,10 @@ function getHelpMsg(){
 			hlpMsg += '**!del** *day line*\n';
 			hlpMsg += '\t -Delete the chosen line at the chosen day\n';
 			hlpMsg += '\t -*Ex: !del Mo 1*\n\n';
+			
+			hlpMsg += '**!pos** *day lineToReplace position*\n';
+			hlpMsg += '\t -Move the line of a day to the chosen position\n';
+			hlpMsg += '\t -*Ex: !pos Mo 3 2 (move line 3 to position 2 on Monday)*\n\n';
 			
 			hlpMsg += '-Day formats accepted : Monday, Mo, 1\n';
 			hlpMsg += '-[Parameters] between brackets are optionnal.\n';
@@ -322,7 +330,7 @@ function delMsg(args, channelID){
 	var lineNb;
 	if (!isNaN(argLineNb)) 
 		argLineNb = parseInt(argLineNb);
-	if (isNaN(argLineNb) || mapDaysMsg[dayNb].length < argLineNb-1){
+	if (isNaN(argLineNb) || mapDaysMsg[dayNb].length < argLineNb-1 || argLineNb-1 < 0){
 		bot.sendMessage({
 			to: channelID,
 			message: getWrongLineMsg()
@@ -336,6 +344,70 @@ function delMsg(args, channelID){
 	}
 	
 	mapDaysMsg[dayNb].splice(lineNb, 1);
+	return 'ok';
+}
+
+function reposMsg(args, channelID){
+	if (args == null || args.length != 3){
+		bot.sendMessage({
+			to: channelID,
+			message: getWrongArgNbMsg()
+		}, function(err, res){
+			deleteMsgDelay(channelID, res.id);
+		});
+		return;
+	}
+	
+	var dayNb = getDayNb(args[0]);
+	
+	if (dayNb == null || dayNb < 0 || dayNb > 6){
+		bot.sendMessage({
+			to: channelID,
+			message: getWrongDayMsg()
+		}, function(err, res){
+			deleteMsgDelay(channelID, res.id);
+		});
+		return;
+	}
+	
+	var argLineNb = args[1];
+	var lineNb;
+	if (!isNaN(argLineNb)) 
+		argLineNb = parseInt(argLineNb);
+	if (isNaN(argLineNb) || mapDaysMsg[dayNb].length < argLineNb-1 || argLineNb-1 < 0){
+		bot.sendMessage({
+			to: channelID,
+			message: getWrongLineMsg()
+		}, function(err, res){
+			deleteMsgDelay(channelID, res.id);
+		});
+		return;
+	}
+	else{
+		lineNb = argLineNb-1;
+	}
+	
+	var argLineNbToGo = args[2];
+	var lineNbToGo;
+	if (!isNaN(argLineNbToGo)) 
+		argLineNbToGo = parseInt(argLineNbToGo);
+	if (isNaN(argLineNbToGo) || mapDaysMsg[dayNb].length < argLineNbToGo-1 || argLineNbToGo-1 < 0){
+		bot.sendMessage({
+			to: channelID,
+			message: getWrongLineMsg()
+		}, function(err, res){
+			deleteMsgDelay(channelID, res.id);
+		});
+		return;
+	}
+	else{
+		lineNbToGo = argLineNbToGo-1;
+	}
+	
+	var currMsgLine = mapDaysMsg[dayNb][lineNb];
+	mapDaysMsg[dayNb].splice(lineNb, 1);
+	mapDaysMsg[dayNb].splice(lineNbToGo, 0, currMsgLine);
+	
 	return 'ok';
 }
 
@@ -509,6 +581,18 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 				// !del - args are : day lineNumber
 				case 'del':
 					var newMsg = delMsg(args, channelID);
+					if (!newMsg)
+						break;
+					
+					bot.editMessage({
+					   channelID: channelID,
+					   messageID: msgId,
+					   message: getDisplayMsg()
+					});
+					break;
+				// !pos - args are : day posOfLine posToRGo
+				case 'pos':
+					var newMsg = reposMsg(args, channelID);
 					if (!newMsg)
 						break;
 					
