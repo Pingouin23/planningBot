@@ -15,7 +15,7 @@ let bot = new Discord.Client({
    autorun: true
 });
 
-let authorizedRoles = ['Taupe FR Modo', 'Taupe FR Admin'];
+let authorizedRoles = auth.authorizedRoles; //'Taupe FR Modo', 'Taupe FR Admin'
 
 let msgId = state.msgId;
 let mapDaysMsg = state.mapDaysMsg || {
@@ -40,11 +40,11 @@ const mapDaysLang = {
 	6: {'fr':'Dimanche', 'en':'Sunday'}
 };
 
-const twitter_application_consumer_key = '';  // API Key
-const twitter_application_secret = '';  // API Secret
-const twitter_user_access_token = '';  // Access Token
-const twitter_user_secret = '';  // Access Token Secret
-const twitch_channel = 'https://twitch.tv/lataupefr';
+const twitter_application_consumer_key = auth.twitter_application_consumer_key;  // API Key
+const twitter_application_secret = auth.twitter_application_secret;  // API Secret
+const twitter_user_access_token = auth.twitter_user_access_token;  // Access Token
+const twitter_user_secret = auth.twitter_user_secret;  // Access Token Secret
+const twitch_channel = auth.twitch_channel;//'https://twitch.tv/lataupefr';
 	
 function getWrongDayMsg(){
 	switch(currLang) {
@@ -116,6 +116,10 @@ function getHelpMsg(){
 			hlpMsg += '\t -Déplace la ligne d\'un jour à la position souhaitée\n';
 			hlpMsg += '\t -*Ex: !pos Lu 3 2 (délace la ligne 3 à la position 2 du Lundi)*\n\n';
 			
+			hlpMsg += '**!manual** *jour phrase*\n';
+			hlpMsg += '\t -Ecrit la phrase au jour désiré\n';
+			hlpMsg += '\t -*Ex: !manual Lu Tournoi Isaac à partir de 20h*\n\n';
+			
 			hlpMsg += '-Formats de jour acceptés : Lundi, Lu, 1\n';
 			hlpMsg += '-Les [paramètres] entre crochets sont optionnels.\n';
 			hlpMsg += '-Si un paramètre doit contenir des espaces, le nommer entre " ". Ex : !add Lu run1 run2 "après Shigan/Future"';
@@ -142,6 +146,10 @@ function getHelpMsg(){
 			hlpMsg += '**!pos** *day lineToReplace position*\n';
 			hlpMsg += '\t -Move the line of a day to the chosen position\n';
 			hlpMsg += '\t -*Ex: !pos Mo 3 2 (move line 3 to position 2 on Monday)*\n\n';
+			
+			hlpMsg += '**!manual** *day sentence*\n';
+			hlpMsg += '\t -Write the sentence on the chosen day\n';
+			hlpMsg += '\t -*Ex: !manual Mo Isaac tournament starting at 9PM*\n\n';
 			
 			hlpMsg += '-Day formats accepted : Monday, Mo, 1\n';
 			hlpMsg += '-[Parameters] between brackets are optionnal.\n';
@@ -411,6 +419,37 @@ function reposMsg(args, channelID){
 	return 'ok';
 }
 
+
+function manualMsg(args, channelID){
+	if (args == null || args.length < 2){
+		bot.sendMessage({
+			to: channelID,
+			message: getWrongArgNbMsg()
+		}, function(err, res){
+			deleteMsgDelay(channelID, res.id);
+		});
+		return;
+	}
+	
+	var dayNb = getDayNb(args[0]);
+	
+	if (dayNb == null || dayNb < 0 || dayNb > 6){
+		bot.sendMessage({
+			to: channelID,
+			message: getWrongDayMsg()
+		}, function(err, res){
+			deleteMsgDelay(channelID, res.id);
+		});
+		return;
+	}
+	
+	args.splice(0, 1);
+	var manMsg = args.join(' ');
+	mapDaysMsg[dayNb].push(manMsg);
+	
+	return 'ok';
+}
+
 function getScheduleTweetMsg(matchLs, dayNb){
 	var msg = getStartingTweetMsg(dayNb);
 	for (var i=0; i<matchLs.length; i++){
@@ -593,6 +632,18 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 				// !pos - args are : day posOfLine posToRGo
 				case 'pos':
 					var newMsg = reposMsg(args, channelID);
+					if (!newMsg)
+						break;
+					
+					bot.editMessage({
+					   channelID: channelID,
+					   messageID: msgId,
+					   message: getDisplayMsg()
+					});
+					break;
+				// !manual - args day + everything else after the day
+				case 'manual':
+					var newMsg = manualMsg(args, channelID);
 					if (!newMsg)
 						break;
 					
