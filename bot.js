@@ -114,7 +114,7 @@ function getHelpMsg(){
 			
 			hlpMsg += '**!pos** *jour ligneAreplacer position*\n';
 			hlpMsg += '\t -Déplace la ligne d\'un jour à la position souhaitée\n';
-			hlpMsg += '\t -*Ex: !pos Lu 3 2 (délace la ligne 3 à la position 2 du Lundi)*\n\n';
+			hlpMsg += '\t -*Ex: !pos Lu 3 2 (déplace la ligne 3 à la position 2 du Lundi)*\n\n';
 			
 			hlpMsg += '**!manual** *jour phrase*\n';
 			hlpMsg += '\t -Ecrit la phrase au jour désiré\n';
