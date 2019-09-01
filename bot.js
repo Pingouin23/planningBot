@@ -166,7 +166,7 @@ function getSetupMsg(){
 function getDisplayMsg(){
 	var msg = '';
 	for (var i=0; i<nbDays; i++){
-		msg += '__**' + mapDaysLang[i][currLang] + ' :**__\n';
+		msg += '__**' + mapDaysLang[i][currLang] + ' :**__';
 		msg += '```';
 		for (var j=0; j<mapDaysMsg[i].length; j++){
 			msg += mapDaysMsg[i][j];
